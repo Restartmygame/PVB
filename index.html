@@ -874,7 +874,81 @@
   .btnSmall{ padding:8px 10px; font-size:13px; border-radius:12px; }
 }
 
-  </style>
+  
+/* ================= Mobile UX extras ================= */
+
+/* Dropdown de ações (substitui a fileira gigante de botões no topo no mobile) */
+.btnActions{ display:none; }
+.actionsPop{
+  position:absolute;
+  top:56px;
+  right:12px;
+  width:min(300px, 92vw);
+  background:rgba(0,0,0,.58);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:16px;
+  padding:8px;
+  box-shadow:0 18px 46px rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display:none;
+  z-index:9;
+}
+.actionsPop.show{display:block;}
+.actionsPop .act{
+  width:100%;
+  text-align:left;
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:1100;
+  margin:4px 0;
+}
+.actionsPop .act small{opacity:.72; font-weight:900;}
+.actionsPop .sep{height:1px; background:rgba(255,255,255,.12); margin:6px 0;}
+
+/* No touch: remove dicas/atalhos de desktop */
+@media (pointer: coarse){
+  .hint{display:none;}
+  .side .small{display:none;}
+}
+
+/* No mobile: troca os botões do topo por um dropdown */
+@media (pointer: coarse) and (max-height: 760px){
+  .btns button:not(#btnActions){display:none;}
+  #btnActions{display:inline-flex;}
+}
+
+/* Info: em telas pequenas, usa layout "split" (lista em cima + detalhe em baixo) sem precisar rolar até o fim */
+@media (pointer: coarse) and (max-width: 980px){
+  .infoLayout{
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 42vh 1fr !important;
+    min-height: 0 !important;
+    height: min(72vh, 640px) !important;
+  }
+  .infoList, .infoDetail{
+    max-height: none !important;
+  }
+  .infoItem .t2{ white-space: normal; }
+}
+
+/* Paisagem baixa: deixa a barra de progressão em cima do tabuleiro (ganha altura) */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 620px){
+  .play{position:relative;}
+  .wavebar{
+    position:absolute;
+    left:10px;
+    right:10px;
+    top:8px;
+    z-index:4;
+    background:rgba(0,0,0,.30);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .canvasWrap{padding-top:58px;}
+}
+
+</style>
 </head>
 
 <body>
@@ -896,7 +970,22 @@
 <button id="btnSound">Som: ON</button>
         <button id="btnPause">Pausar</button>
         <button id="btnRestart">Reiniciar Mundo</button>
+        <button id="btnActions" class="btnActions">Ações ▾</button>
       </div>
+    
+</div>
+
+    <div class="actionsPop" id="actionsPop" aria-hidden="true">
+      <button class="act" data-act="menu">📋 Menu</button>
+      <button class="act" data-act="map">🗺️ Mapa</button>
+      <button class="act" data-act="info">ℹ️ Info</button>
+      <div class="sep"></div>
+      <button class="act" data-act="pause">⏯ Pausar</button>
+      <button class="act" data-act="restart">🔁 Reiniciar mundo</button>
+      <button class="act" data-act="sound">🔊 Som (ON/OFF)</button>
+      <button class="act" data-act="debug">🧪 Debug</button>
+      <div class="sep"></div>
+      <button class="act" data-act="fullscreen">⛶ Tela cheia</button>
     </div>
 
     <div class="main">
@@ -1106,6 +1195,58 @@ window.addEventListener("unhandledrejection", (e)=>{ showFatalError(e.reason || 
   const btnDebug = document.getElementById("btnDebug");
   if(btnDebug){ btnDebug.addEventListener("click", ()=>{ try{ toggleDebugBox(); }catch(err){ showFatalError(err); } }); }
   const btnSound = document.getElementById("btnSound");
+
+  const btnActions = document.getElementById("btnActions");
+  const actionsPop = document.getElementById("actionsPop");
+
+  const IS_TOUCH = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+  const IS_MOBILE = IS_TOUCH && !!(window.matchMedia && (window.matchMedia("(max-width: 980px)").matches || window.matchMedia("(max-height: 760px)").matches));
+
+  function hideActionsPop(){
+    if(!actionsPop) return;
+    actionsPop.classList.remove("show");
+    actionsPop.setAttribute("aria-hidden","true");
+  }
+  function toggleActionsPop(){
+    if(!actionsPop) return;
+    const show = !actionsPop.classList.contains("show");
+    actionsPop.classList.toggle("show", show);
+    actionsPop.setAttribute("aria-hidden", (!show).toString());
+  }
+
+  async function tryFullscreen(){
+    try{
+      const el = document.documentElement;
+      if(document.fullscreenElement) { await document.exitFullscreen(); return; }
+      if(el.requestFullscreen) await el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    }catch(_e){}
+  }
+
+  if(btnActions){
+    btnActions.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); toggleActionsPop(); });
+  }
+  if(actionsPop){
+    actionsPop.addEventListener("click", (ev)=>{
+      const b = ev.target && ev.target.closest ? ev.target.closest("button[data-act]") : null;
+      if(!b) return;
+      const act = b.getAttribute("data-act");
+      hideActionsPop();
+      try{
+        if(act==="menu") showOverlay("menu");
+        else if(act==="map") showOverlay("map");
+        else if(act==="info") showOverlay("info");
+        else if(act==="pause") togglePause();
+        else if(act==="restart") restartWorld();
+        else if(act==="sound" && btnSound) btnSound.click();
+        else if(act==="debug") toggleDebugBox();
+        else if(act==="fullscreen") tryFullscreen();
+      }catch(err){ showFatalError(err); }
+    });
+  }
+
+  // Fecha o dropdown se clicar fora
+  window.addEventListener("pointerdown", ()=>{ hideActionsPop(); }, {passive:true});
 
   const overlay = document.getElementById("overlay");
   const overlayTitle = document.getElementById("overlayTitle");
@@ -3795,6 +3936,8 @@ if(selectedId && !isPlantOwned(selectedId)) selectedId = null;
 
 function renderOverlay(){
 
+    try{ hideActionsPop(); }catch(_e){}
+
     tabMenu.classList.toggle("active", overlayMode==="menu");
     tabMap.classList.toggle("active", overlayMode==="map" || overlayMode==="loadout");
     tabInfo.classList.toggle("active", overlayMode==="info" || overlayMode==="custom");
@@ -4488,6 +4631,9 @@ if(def.kind==="cone"){
     const list = document.createElement("div");
     list.className = "infoList";
 
+    // mobile UX: preserva a posição do scroll da lista ao trocar item
+    try{ if(_infoListKind===infoKind) list.scrollTop = _infoListScroll; }catch(_e){}
+
     const detail = document.createElement("div");
     detail.className = "infoDetail";
 
@@ -4503,6 +4649,7 @@ if(def.kind==="cone"){
       `;
       item.addEventListener("click", ()=>{
         infoSelectedId = id;
+        try{ _infoListKind = infoKind; _infoListScroll = list.scrollTop || 0; }catch(_e){}
         renderOverlay();
       });
       list.appendChild(item);
@@ -10613,8 +10760,10 @@ if((e.poisonT||0) > 0){
     if(!el) return;
     function upd(){
       const isPortrait = window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
-      el.classList.toggle("show", !!isPortrait);
-      el.setAttribute("aria-hidden", (!isPortrait).toString());
+      const overlayOpen = !!(document.getElementById("overlay") && document.getElementById("overlay").classList.contains("show"));
+      const show = !!isPortrait && !overlayOpen;
+      el.classList.toggle("show", show);
+      el.setAttribute("aria-hidden", (!show).toString());
     }
     window.addEventListener("resize", upd);
     window.addEventListener("orientationchange", upd);
