@@ -1,4 +1,4 @@
-const CACHE = "boti-defense-pwa-v2";
+const CACHE = "boti-defense-pwa-v4";
 const ASSETS = [
   "./",
   "./index.html",

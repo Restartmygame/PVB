@@ -768,7 +768,18 @@
     
 
 /* ================= Mobile/PWA fit ================= */
-@media (max-width: 900px), (max-height: 620px){
+
+/* Ajustes gerais de pouca altura (Chrome mobile em paisagem costuma ter viewport "apertado") */
+@media (max-height: 620px){
+  .hint{display:none;}
+  .top{padding:8px 10px;}
+  .main{padding:8px; gap:10px;}
+  .wavebar{padding:8px 10px;}
+  .canvasWrap{padding:6px;}
+}
+
+/* Telas estreitas (celular): empilha e transforma a seedbank em barra horizontal */
+@media (max-width: 760px){
   :root{
     --uiPad:0px;
     --uiPad2:0px;
@@ -793,7 +804,7 @@
     min-width:0;
     max-width:100%;
   }
-  /* seedbank vira barra horizontal (melhor no celular) */
+  /* seedbank vira barra horizontal (melhor no celular em pé) */
   .seedbank,
   .seedbank.multicol{
     display:flex;
@@ -811,12 +822,50 @@
   .zoomControls{ right:10px; top:10px; }
 }
 
-@media (max-height: 620px){
-  .hint{display:none;}
-  .top{padding:8px 10px;}
-  .main{padding:8px; gap:10px;}
-  .wavebar{padding:8px 10px;}
+/* Celular em paisagem: mantém o painel à esquerda para o tabuleiro ficar grande */
+@media (orientation: landscape) and (max-height: 620px) and (min-width: 760px){
+  :root{
+    --uiPad:0px;
+    --uiPad2:0px;
+    --shellW: 100%;
+    --sideW: min(320px, 36vw);
+  }
+
+  .top{padding:6px 8px; flex-wrap:nowrap;}
+  .brand{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:55vw;}
+  .brand::-webkit-scrollbar{display:none;}
+  .btns{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:45vw;}
+  .btns::-webkit-scrollbar{display:none;}
+
+  .pill{font-size:11px; padding:4px 7px;}
+  button{font-size:11px; padding:6px 8px; border-radius:11px;}
+  .btnSmall{font-size:11px; padding:6px 8px; border-radius:11px;}
+
+  .main{flex-direction:row; gap:12px; padding:8px;}
+  .side{padding:8px;}
+  .sideHeader{padding:5px 6px;}
+
+  /* Em painéis estreitos, desliga o modo multicol e deixa scroll vertical */
+  .seedbank.multicol{
+    display:flex !important;
+    flex-direction:column !important;
+    grid-auto-flow:unset !important;
+    grid-template-rows:unset !important;
+    grid-auto-columns:unset !important;
+    row-gap:unset !important;
+    column-gap:unset !important;
+    overflow:auto !important;
+    overflow-x:hidden !important;
+    padding-right:2px !important;
+  }
+  .seedbank.multicol .seed{ width:auto !important; }
+
+  .seed{min-height:42px; padding:7px 7px 7px 9px; border-radius:13px;}
+  .icon{width:32px;height:32px;border-radius:11px;font-size:18px;}
+  .wavebar{padding:7px 9px; border-radius:14px;}
+  .bar{height:10px;}
   .canvasWrap{padding:6px;}
+  .zoomControls{ right:10px; top:10px; }
 }
 
 /* melhora toque */
