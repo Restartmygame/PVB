@@ -22,6 +22,8 @@
       --warn:#FFD36A;
       --bad:#FF6A6A;
       --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --uiPad:12px;
+      --uiPad2:24px;
       --sideBaseW:240;
       --sideW:240px;
       --seedColW:198;
@@ -53,16 +55,16 @@
   align-items:stretch;
   justify-content:center;
   box-sizing:border-box;
-  padding-top: calc(12px + env(safe-area-inset-top));
-  padding-right: calc(12px + env(safe-area-inset-right));
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
-  padding-left: calc(12px + env(safe-area-inset-left));
+  padding-top: calc(var(--uiPad) + env(safe-area-inset-top));
+  padding-right: calc(var(--uiPad) + env(safe-area-inset-right));
+  padding-bottom: calc(var(--uiPad) + env(safe-area-inset-bottom));
+  padding-left: calc(var(--uiPad) + env(safe-area-inset-left));
 }
     .shell{
   width:var(--shellW);
   max-width:100%;
-  height: calc((var(--vh, 1vh) * 100) - (24px + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
-  max-height: calc((var(--vh, 1vh) * 100) - (24px + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  height: calc((var(--vh, 1vh) * 100) - (var(--uiPad2) + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  max-height: calc((var(--vh, 1vh) * 100) - (var(--uiPad2) + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
   border-radius:18px;
   border:1px solid var(--line);
   background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
@@ -378,12 +380,15 @@
 
     /* Overlay / Modal */
     .overlay{
-      position:absolute; inset:0;
+      position:fixed; inset:0;
       background:rgba(0,0,0,.62);
       display:none;
       align-items:center;
       justify-content:center;
-      padding:18px;
+      padding: calc(12px + env(safe-area-inset-top))
+               calc(12px + env(safe-area-inset-right))
+               calc(12px + env(safe-area-inset-bottom))
+               calc(12px + env(safe-area-inset-left));
       box-sizing:border-box;
       z-index:10;
     }
@@ -398,7 +403,7 @@
       position:relative;
       display:flex;
       flex-direction:column;
-      max-height: calc(100vh - 44px);
+      max-height: calc((var(--vh, 1vh) * 100) - (44px + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
       overflow:hidden;
     }
     .modal::before{
@@ -763,12 +768,25 @@
     
 
 /* ================= Mobile/PWA fit ================= */
-@media (max-width: 900px){
+@media (max-width: 900px), (max-height: 620px){
   :root{
+    --uiPad:0px;
+    --uiPad2:0px;
     --shellW: 100%;
     --sideW: 100%;
   }
   .main{flex-direction:column; gap:10px;}
+
+  /* top compacto: evita comer altura e cortar o jogo */
+  .top{padding:8px 10px;}
+  .brand{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%;}
+  .brand::-webkit-scrollbar{display:none;}
+  .btns{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%;}
+  .btns::-webkit-scrollbar{display:none;}
+  .pill{font-size:12px; padding:5px 8px;}
+  button{font-size:12px; padding:7px 9px; border-radius:12px;}
+  .btnSmall{font-size:12px; padding:7px 9px; border-radius:12px;}
+
   .side{
     width:100%;
     flex:0 0 auto;
@@ -803,8 +821,8 @@
 
 /* melhora toque */
 @media (pointer: coarse){
-  button{ padding:10px 12px; }
-  .btnSmall{ padding:10px 12px; font-size:13px; border-radius:12px; }
+  button{ padding:8px 10px; }
+  .btnSmall{ padding:8px 10px; font-size:13px; border-radius:12px; }
 }
 
   </style>
