@@ -46,17 +46,32 @@
       overflow:hidden;
     }
 
-    .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box;}
+    .wrap{
+  height:100%;
+  min-height:100%;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  box-sizing:border-box;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-right: calc(12px + env(safe-area-inset-right));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  padding-left: calc(12px + env(safe-area-inset-left));
+}
     .shell{
-      width:var(--shellW);
-      max-width:100%;
-      border-radius:18px;
-      border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      position:relative;
-    }
+  width:var(--shellW);
+  max-width:100%;
+  height: calc((var(--vh, 1vh) * 100) - (24px + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  max-height: calc((var(--vh, 1vh) * 100) - (24px + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
 
     .top{
       display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -102,12 +117,15 @@
     }
 
     .main{
-      display:flex;
-      gap:16px;
-      padding:12px;
-      background:rgba(0,0,0,.10);
-      position:relative;
-    }
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  gap:16px;
+  padding:12px;
+  background:rgba(0,0,0,.10);
+  position:relative;
+  overflow:hidden;
+}
     .main::after{
       content:"";
       flex:0 0 var(--sidePadW);
@@ -130,6 +148,7 @@
       flex-direction:column;
       gap:10px;
       position:relative;
+      min-height:0;
     }
     .sideHeader{
       display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -144,7 +163,9 @@
   display:flex;
   flex-direction:column;
   gap:8px;
-  max-height: calc(100vh - 210px);
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
   overflow:auto;
   padding-right:2px;
 }
@@ -220,6 +241,7 @@
     .play{
       flex:1 1 auto;
       min-width:0;
+      min-height:0;
       display:flex;
       flex-direction:column;
       gap:10px;
@@ -278,26 +300,30 @@
     }
 
     .canvasWrap{
-      position:relative;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:10px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.16);
-      overflow:visible;
-      min-height:520px;
-    }
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:10px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.16);
+  overflow:hidden; /* evita "corte" no mobile quando houver zoom */
+}
 
     canvas{
-      width:min(860px, 100%);
+      display:block;
+      max-width:100%;
+      max-height:100%;
+      width:auto;
       height:auto;
       aspect-ratio: 4 / 3;
       border-radius:16px;
       border:1px solid rgba(255,255,255,.14);
       background:linear-gradient(180deg, rgba(12,16,34,.95), rgba(7,10,22,.95));
-      transform: scale(var(--zoom, 1.12));
+      transform: scale(var(--zoom, 1));
       transform-origin:center;
       cursor:default;
     
@@ -736,7 +762,52 @@
     #rotateOverlay .sub{ font-size:14px; opacity:.85; line-height:1.35; }
     
 
-</style>
+/* ================= Mobile/PWA fit ================= */
+@media (max-width: 900px){
+  :root{
+    --shellW: 100%;
+    --sideW: 100%;
+  }
+  .main{flex-direction:column; gap:10px;}
+  .side{
+    width:100%;
+    flex:0 0 auto;
+    min-width:0;
+    max-width:100%;
+  }
+  /* seedbank vira barra horizontal (melhor no celular) */
+  .seedbank,
+  .seedbank.multicol{
+    display:flex;
+    flex-direction:row;
+    flex-wrap:nowrap;
+    gap:10px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    max-height:150px;
+    padding-right:0;
+  }
+  .seedbank.multicol .seed{ width:auto; }
+  .seed{ min-width: 220px; }
+  .side .small{display:none;}
+  .zoomControls{ right:10px; top:10px; }
+}
+
+@media (max-height: 620px){
+  .hint{display:none;}
+  .top{padding:8px 10px;}
+  .main{padding:8px; gap:10px;}
+  .wavebar{padding:8px 10px;}
+  .canvasWrap{padding:6px;}
+}
+
+/* melhora toque */
+@media (pointer: coarse){
+  button{ padding:10px 12px; }
+  .btnSmall{ padding:10px 12px; font-size:13px; border-radius:12px; }
+}
+
+  </style>
 </head>
 
 <body>
@@ -837,6 +908,15 @@
   // ================= DOM =================
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
+
+  // iOS/Android: estabiliza altura real (evita "corte" quando a barra do navegador some/aparece)
+  function setVh(){
+    document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+  }
+  setVh();
+  window.addEventListener('resize', setVh, {passive:true});
+  window.addEventListener('orientationchange', ()=>setTimeout(setVh, 250), {passive:true});
+
 
 const errBox = document.createElement("div");
 errBox.style.position = "fixed";
@@ -2858,15 +2938,40 @@ let screenFlashColor = "#A9C6FF";
   let infoSelectedId = "sun";
 
   // ================= Zoom =================
-  let zoom = 1.12;
+  function isNarrow(){ return window.innerWidth <= 900; }
+  function isShort(){ return window.innerHeight <= 620; }
+  function syncMobileClass(){
+    // layout mobile (barra horizontal de perfumes etc.)
+    document.body.classList.toggle("mobile", isNarrow());
+  }
+  syncMobileClass();
+  window.addEventListener("resize", syncMobileClass, {passive:true});
+
+  let zoom = (isNarrow() || isShort()) ? 1.00 : 1.12;
+
+  function zoomClamp(){
+    if(isShort()) return {min:0.80, max:1.00};      // celular em paisagem (altura curta)
+    if(isNarrow()) return {min:0.85, max:1.18};     // tablets / janela pequena
+    return {min:0.90, max:1.40};                    // desktop
+  }
+
   function applyZoom(){
-    zoom = clamp(zoom, 0.90, 1.40);
+    const {min,max} = zoomClamp();
+    zoom = clamp(zoom, min, max);
     canvas.style.setProperty("--zoom", zoom.toFixed(2));
     zoomText.textContent = `${Math.round(zoom*100)}%`;
+    zoomInBtn.disabled = zoom >= (max - 1e-6);
+    zoomOutBtn.disabled = zoom <= (min + 1e-6);
   }
+
   zoomInBtn.addEventListener("click", ()=>{ zoom += 0.06; applyZoom(); });
   zoomOutBtn.addEventListener("click", ()=>{ zoom -= 0.06; applyZoom(); });
+
+  // ao redimensionar / virar o celular, garante que o zoom não estoure o layout
+  window.addEventListener("resize", ()=>{ applyZoom(); }, {passive:true});
+  window.addEventListener("orientationchange", ()=>{ setTimeout(applyZoom, 250); }, {passive:true});
   applyZoom();
+
 
   // ================= Utilities =================
   function activeOrbCount(){
